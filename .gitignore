@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+.ruff_cache/
+.idea/
+.vscode/
+*.gguf
+*.bin
+results/raw/*
+results/processed/*
+results/reports/*
+!results/**/.gitkeep

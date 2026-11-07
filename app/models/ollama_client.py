@@ -9,7 +9,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
-
+import time
 import httpx
 import ollama
 
@@ -80,3 +80,16 @@ def list_models() -> list[ModelInfo]:
             )
         )
     return sorted(models, key=lambda x: x.name)
+def loaded_models() -> list[str]:
+    """Names of models currently resident in memory (`ollama ps`)."""
+    with ollama_errors():
+        return [m.model or "" for m in get_client().ps().models]
+
+
+def unload_model(model: str, timeout_s: float = 15.0) -> None:
+    """Evict a model from memory (keep_alive=0) and wait until it is gone."""
+    with ollama_errors(model):
+        get_client().generate(model=model, keep_alive=0)
+    deadline = time.monotonic() + timeout_s
+    while model in loaded_models() and time.monotonic() < deadline:
+        time.sleep(0.25)

@@ -65,7 +65,6 @@ class GenerationStats:
         )
 
 
-
 @dataclass
 class ChatResult:
     content: str
@@ -96,7 +95,6 @@ def _chat_kwargs(
     if fmt is not None:
         kwargs["format"] = fmt
     if params.think is not None:
-
         kwargs["think"] = params.think
     return kwargs
 
@@ -120,16 +118,16 @@ def stream_chat(
     model: str,
     messages: list[dict[str, str]],
     params: GenerationParams | None = None,
+    fmt: dict[str, Any] | str | None = None,
 ) -> Iterator[StreamEvent]:
     """Streaming generation. Yields text events, then one final stats event."""
     params = params or GenerationParams()
     start = perf_counter()
     ttft: float | None = None
     with ollama_errors(model):
-        for chunk in get_client().chat(**_chat_kwargs(model, messages, params, True)):
+        for chunk in get_client().chat(**_chat_kwargs(model, messages, params, True, fmt)):
             text = chunk.message.content or ""
             if text:
-
                 if ttft is None:
                     ttft = perf_counter() - start
                 yield StreamEvent(text=text)

@@ -43,7 +43,7 @@ class StructuredResult:
         return self.data
 
 
-def _build_messages(spec: SchemaSpec, user_text: str, constrained: bool) -> list[dict[str, str]]:
+def build_messages(spec: SchemaSpec, user_text: str, constrained: bool) -> list[dict[str, str]]:
     system = spec.instruction
     if not constrained:
         # Without schema-constrained decoding, the model must be told the shape in text.
@@ -75,7 +75,7 @@ def generate_structured(
     # Low temperature for extraction; generous token cap, since truncated JSON is invalid JSON.
     params = params or GenerationParams(temperature=0.0, max_tokens=1024)
     fmt = spec.model.model_json_schema() if constrained else None
-    messages = _build_messages(spec, user_text, constrained)
+    messages = build_messages(spec, user_text, constrained)
     result = StructuredResult(schema_key=schema_key, model=model, constrained=constrained)
 
     for attempt in range(1, max_retries + 2):  # first try + retries

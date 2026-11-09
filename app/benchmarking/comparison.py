@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pandas as pd
-
+import json
 from app.benchmarking.latency import summarize
 from app.benchmarking.throughput import aggregate_tps
 from app.utils.file_handler import read_jsonl
@@ -149,3 +149,22 @@ def explain(ranked: pd.DataFrame) -> str:
              "DEFAULT_WEIGHTS, which are an assumption. Check the per-category quality "
              "before trusting a single number.")
     return text
+
+def list_runs(results_dir: Path, prefix: str = "run") -> list[Path]:
+    """Raw JSONL files for one kind of run (run, temp or quant), oldest first."""
+    return sorted(results_dir.glob(f"{prefix}_*.jsonl"))
+
+
+def load_model_info(paths: list[Path]) -> pd.DataFrame:
+    """Model size and quantization recorded in each run's .meta.json."""
+    rows: dict[str, dict] = {}
+    for path in paths:
+        meta_path = Path(path).with_suffix(".meta.json")
+        if not meta_path.exists():
+            continue
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        for name, info in meta.get("models", {}).items():
+            rows[name] = {"model": name, "size_gb": info.get("size_gb"),
+                          "parameter_size": info.get("parameter_size"),
+                          "quantization": info.get("quantization")}
+    return pd.DataFrame(list(rows.values()))

@@ -41,11 +41,12 @@ class BenchmarkConfig:
     max_tokens: int = 256
     structured_max_tokens: int = 512
     num_ctx: int = 4096
-    seed: int = 42
+    seed: int | None = 42
     sample_interval_s: float = 0.25
     no_think_prefixes: tuple[str, ...] = ("qwen3",)
     categories: list[str] | None = None
     limit_per_category: int | None = None
+    run_prefix: str = "run"
 
     @classmethod
     def from_yaml(cls, models: list[str], path: Path = CONFIG_PATH, **overrides: Any):
@@ -203,7 +204,7 @@ def run_benchmark(config: BenchmarkConfig, on_progress: ProgressFn | None = None
 
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     config.results_dir.mkdir(parents=True, exist_ok=True)
-    out_path = config.results_dir / f"run_{run_id}.jsonl"
+    out_path = config.results_dir / f"{config.run_prefix}_{run_id}.jsonl"
     meta_path = out_path.with_suffix(".meta.json")
 
     snap = system_info.snapshot()
@@ -218,17 +219,14 @@ def run_benchmark(config: BenchmarkConfig, on_progress: ProgressFn | None = None
     }
     write_json(meta, meta_path)
 
-    status = "completed"
+    status = "interrupted"
     try:
         with out_path.open("a", encoding="utf-8") as sink:
             done = 0
             for model in available:
                 done = _benchmark_model(model, prompts, config, sink, progress, done, total)
-    except KeyboardInterrupt:
-        status = "interrupted"
-        raise
+        status = "completed"
     except Exception:
-
         status = "failed"
         raise
     finally:

@@ -5,16 +5,8 @@ import argparse
 from app.core.exceptions import LocalMindError
 from app.core.logging_config import setup_logging
 from app.structured_output.generator import generate_structured
-from app.structured_output.schemas import SCHEMAS
+from app.structured_output.schemas import SAMPLES, SCHEMAS
 
-SAMPLES = {
-    "ticket": "I was charged twice for my subscription this month and nobody has replied "
-              "to my emails. This is unacceptable, fix it today.",
-    "resume": "Priya Nair, priya@example.com. Data analyst with 3 years at Infosys. "
-              "B.Tech in Computer Science, VIT, 2021. Skills: Python, SQL, Power BI.",
-    "meeting": "Weekly sync on 12 March. Present: Ravi, Meera, John. We decided to delay the "
-               "launch to April. Meera will update the roadmap by Friday.",
-}
 
 
 def main() -> None:

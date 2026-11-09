@@ -47,3 +47,35 @@ def build_figures(summary: pd.DataFrame, by_category: pd.DataFrame) -> dict[str,
         "quality": quality_chart(by_category),
         "reliability": reliability_chart(summary),
     }
+def figures_html(figures: dict[str, Figure]) -> str:
+    """Embed several figures in one HTML string (Plotly JS loaded once from a CDN)."""
+    return "".join(
+        fig.to_html(full_html=False, include_plotlyjs="cdn" if i == 0 else False)
+        for i, fig in enumerate(figures.values())
+    )
+
+
+def temperature_chart(by_temp: pd.DataFrame) -> Figure:
+    long = by_temp.melt(
+        id_vars="temperature",
+        value_vars=["exact_agreement", "similarity", "quality", "schema_valid_rate"],
+        var_name="metric", value_name="value",
+    )
+    long["temperature"] = long["temperature"].astype(str)
+    fig = px.bar(long, x="metric", y="value", color="temperature", barmode="group",
+                 title="Consistency and quality by temperature (all 0-1)")
+    fig.update_yaxes(range=[0, 1])
+    return fig
+
+
+def quantization_figures(df: pd.DataFrame) -> dict[str, Figure]:
+    memory = df.melt(id_vars="model", value_vars=["disk_mb", "model_mem_mb", "avg_ram_peak_mb"],
+                     var_name="metric", value_name="MB")
+    quality = px.bar(df, x="model", y="avg_quality", title="Rule-based quality (higher is better)")
+    quality.update_yaxes(range=[0, 1])
+    return {
+        "speed": px.bar(df, x="model", y="agg_tps", title="Throughput, tokens/sec"),
+        "memory": px.bar(memory, x="model", y="MB", color="metric", barmode="group",
+                         title="Disk and memory (MB)"),
+        "quality": quality,
+    }

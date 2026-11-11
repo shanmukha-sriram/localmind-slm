@@ -20,8 +20,19 @@ from frontend.components.sidebar import installed_models
 from frontend.components.tables import show_table
 
 RAW = ROOT / "results" / "raw"
-QUANT_COLS = ["model", "quantization", "disk_gb", "model_mem_mb", "avg_ram_peak_mb", "agg_tps",
-              "avg_wall_s", "avg_ttft_s", "avg_quality", "quality_vs_best", "schema_success_rate"]
+QUANT_COLS = [
+    "model",
+    "quantization",
+    "disk_gb",
+    "model_mem_mb",
+    "avg_ram_peak_mb",
+    "agg_tps",
+    "avg_wall_s",
+    "avg_ttft_s",
+    "avg_quality",
+    "quality_vs_best",
+    "schema_success_rate",
+]
 
 
 def render() -> None:
@@ -57,8 +68,9 @@ def _temperature(names: list[str]) -> None:
     st.caption(f"{n * 2 * repeats + 1} requests. Don't touch widgets while it runs.")
     if st.button("Run temperature experiment", type="primary"):
         try:
-            run_temperature_experiment(model, repeats=repeats, per_category=per_cat,
-                                       on_progress=progress_callback())
+            run_temperature_experiment(
+                model, repeats=repeats, per_category=per_cat, on_progress=progress_callback()
+            )
             st.success("Finished.")
         except LocalMindError as exc:
             st.error(str(exc))
@@ -72,9 +84,11 @@ def _temperature(names: list[str]) -> None:
         return
     show_table(by_temp, decimals=3)
     st.plotly_chart(temperature_chart(by_temp))
-    st.caption("exact_agreement 1.0 means every repeat was identical. If temperature 0 is below "
-               "1.0 here, that is a real result: temperature 0 reduces variation but does not "
-               "guarantee identical output.")
+    st.caption(
+        "exact_agreement 1.0 means every repeat was identical. If temperature 0 is below "
+        "1.0 here, that is a real result: temperature 0 reduces variation but does not "
+        "guarantee identical output."
+    )
     with st.expander("Per-prompt results"):
         show_table(per_prompt, decimals=3)
     st.subheader("Compare actual responses")
@@ -87,8 +101,10 @@ def _temperature(names: list[str]) -> None:
 
 
 def _quantization(names: list[str]) -> None:
-    st.write("Compare variants of the same model at different precisions. Pull them first "
-             "(see the Day 4 guide) and check the tags on the Ollama library page.")
+    st.write(
+        "Compare variants of the same model at different precisions. Pull them first "
+        "(see the Day 4 guide) and check the tags on the Ollama library page."
+    )
     variants = st.multiselect("Variants (same model, different quantization)", names)
     ready = False
     if len(variants) >= 2:
@@ -100,8 +116,10 @@ def _quantization(names: list[str]) -> None:
             st.error(p)
         ready = not problems
         if ready:
-            st.success("Same family and size, distinct quantization levels. Also confirm that "
-                       "all tags are the same kind (all instruct).")
+            st.success(
+                "Same family and size, distinct quantization levels. Also confirm that "
+                "all tags are the same kind (all instruct)."
+            )
     c1, c2 = st.columns(2)
     trials = c1.slider("Trials", 1, 3, 2, key="q_trials")
     limit = c2.slider("Prompts per category", 1, 6, 3, key="q_limit")
@@ -122,6 +140,8 @@ def _quantization(names: list[str]) -> None:
     show_table(table, QUANT_COLS, decimals=3)
     for fig in quantization_figures(table).values():
         st.plotly_chart(fig)
-    st.caption("Small quality differences on this prompt set are within noise. Higher "
-               "precision is not guaranteed to be slower, and lower precision is not "
-               "guaranteed to be faster: compare the measured columns.")
+    st.caption(
+        "Small quality differences on this prompt set are within noise. Higher "
+        "precision is not guaranteed to be slower, and lower precision is not "
+        "guaranteed to be faster: compare the measured columns."
+    )

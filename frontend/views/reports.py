@@ -1,5 +1,7 @@
 """Page 7: Reports."""
 
+from pathlib import Path
+
 import streamlit as st
 
 from app.benchmarking.benchmark_runner import ROOT
@@ -10,8 +12,13 @@ from frontend.components.charts import build_figures, figures_html
 RAW = ROOT / "results" / "raw"
 PROCESSED = ROOT / "results" / "processed"
 REPORTS = ROOT / "results" / "reports"
-MIME = {".csv": "text/csv", ".json": "application/json", ".md": "text/markdown",
-        ".html": "text/html", ".jsonl": "application/x-ndjson"}
+MIME = {
+    ".csv": "text/csv",
+    ".json": "application/json",
+    ".md": "text/markdown",
+    ".html": "text/html",
+    ".jsonl": "application/x-ndjson",
+}
 
 
 def render() -> None:
@@ -35,13 +42,17 @@ def render() -> None:
             st.session_state["report_files"] = [str(f) for f in files + paths]
             st.success(f"Wrote {len(files)} files to results/processed and results/reports.")
 
-    files = [f for f in map(__import__("pathlib").Path, st.session_state.get("report_files", []))
-             if f.exists()]
+    files = [f for f in map(Path, st.session_state.get("report_files", [])) if f.exists()]
     if files:
         st.subheader("Downloads")
         for f in files:
-            st.download_button(f"Download {f.name}", data=f.read_bytes(), file_name=f.name,
-                               mime=MIME.get(f.suffix, "application/octet-stream"), key=f.name)
+            st.download_button(
+                f"Download {f.name}",
+                data=f.read_bytes(),
+                file_name=f.name,
+                mime=MIME.get(f.suffix, "application/octet-stream"),
+                key=f.name,
+            )
         report = next((f for f in files if f.suffix == ".md"), None)
         if report:
             with st.expander("Report preview", expanded=True):

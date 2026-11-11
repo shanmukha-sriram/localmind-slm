@@ -9,18 +9,35 @@ from app.inference.generator import GenerationStats, StreamEvent
 from app.models.ollama_client import ModelInfo
 
 PROMPTS = [
-    {"id": "qa-t1", "category": "question_answering", "prompt": "Capital of France?",
-     "eval": {"type": "answer_any", "answers": ["paris"]}},
-    {"id": "qa-t2", "category": "question_answering", "prompt": "Capital of Italy?",
-     "eval": {"type": "answer_any", "answers": ["rome"]}},
+    {
+        "id": "qa-t1",
+        "category": "question_answering",
+        "prompt": "Capital of France?",
+        "eval": {"type": "answer_any", "answers": ["paris"]},
+    },
+    {
+        "id": "qa-t2",
+        "category": "question_answering",
+        "prompt": "Capital of Italy?",
+        "eval": {"type": "answer_any", "answers": ["rome"]},
+    },
 ]
 
 
 def _fake_stream(model, messages, params=None, fmt=None):
     yield StreamEvent(text="Paris")
-    yield StreamEvent(stats=GenerationStats(
-        model=model, tokens_generated=10, generation_s=2.0, prompt_eval_s=0.1,
-        load_s=0.0, total_s=2.3, wall_s=2.5, ttft_s=0.4))
+    yield StreamEvent(
+        stats=GenerationStats(
+            model=model,
+            tokens_generated=10,
+            generation_s=2.0,
+            prompt_eval_s=0.1,
+            load_s=0.0,
+            total_s=2.3,
+            wall_s=2.5,
+            ttft_s=0.4,
+        )
+    )
 
 
 @pytest.fixture
@@ -33,8 +50,13 @@ def config(monkeypatch, tmp_path):
 
     prompts_file = tmp_path / "prompts.json"
     prompts_file.write_text(json.dumps(PROMPTS), encoding="utf-8")
-    return br.BenchmarkConfig(models=["m1"], prompts_path=prompts_file,
-                              results_dir=tmp_path / "raw", trials=2, warmup_runs=1)
+    return br.BenchmarkConfig(
+        models=["m1"],
+        prompts_path=prompts_file,
+        results_dir=tmp_path / "raw",
+        trials=2,
+        warmup_runs=1,
+    )
 
 
 def _rows(path):
@@ -63,7 +85,6 @@ def test_server_down_aborts_and_marks_failed(config, monkeypatch):
     def boom(*args, **kwargs):
         raise OllamaUnavailableError("down")
 
-
     monkeypatch.setattr(br, "stream_chat", boom)
     with pytest.raises(OllamaUnavailableError):
         br.run_benchmark(config)
@@ -74,3 +95,15 @@ def test_server_down_aborts_and_marks_failed(config, monkeypatch):
 def test_load_prompts_limit_per_category(config):
     config.limit_per_category = 1
     assert len(br.load_prompts(config)) == 1
+
+
+def test_ram_is_none_when_ollama_process_is_not_visible(config, monkeypatch):
+    monkeypatch.setattr("app.benchmarking.memory.ollama_rss_mb", lambda: 0.0)
+    rows = _rows(br.run_benchmark(config))
+    assert rows and all(r["ram_peak_mb"] is None for r in rows)  # missing, not a fake 0
+
+
+def test_ram_is_recorded_when_visible(config, monkeypatch):
+    monkeypatch.setattr("app.benchmarking.memory.ollama_rss_mb", lambda: 1234.0)
+    rows = _rows(br.run_benchmark(config))
+    assert all(r["ram_peak_mb"] == pytest.approx(1234.0) for r in rows)

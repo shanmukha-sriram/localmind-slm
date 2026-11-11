@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 RAW_DIR = ROOT / "results" / "raw"
 
 
-
 # ---------------------------------------------------------------- temperature
+
 
 def run_temperature_experiment(
     model: str,
@@ -53,8 +53,13 @@ def run_temperature_experiment(
     if model not in installed:
         raise ModelNotFoundError(f"Model '{model}' is not installed. Run: ollama pull {model}")
 
-    base = BenchmarkConfig(models=[model], limit_per_category=per_category,
-                           categories=categories, seed=None, warmup_runs=0)
+    base = BenchmarkConfig(
+        models=[model],
+        limit_per_category=per_category,
+        categories=categories,
+        seed=None,
+        warmup_runs=0,
+    )
     prompts = load_prompts(base)
     if not prompts:
         raise ValueError("No prompts selected.")
@@ -67,10 +72,16 @@ def run_temperature_experiment(
     out_path = results_dir / f"temp_{run_id}.jsonl"
     meta_path = out_path.with_suffix(".meta.json")
     meta: dict[str, Any] = {
-        "experiment": "temperature", "run_id": run_id, "status": "running",
-        "model": model, "temperatures": list(temperatures), "repeats": repeats,
-        "prompt_ids": [p["id"] for p in prompts], "seed": None,
-        "system": system_info.snapshot(), "model_info": installed[model].__dict__,
+        "experiment": "temperature",
+        "run_id": run_id,
+        "status": "running",
+        "model": model,
+        "temperatures": list(temperatures),
+        "repeats": repeats,
+        "prompt_ids": [p["id"] for p in prompts],
+        "seed": None,
+        "system": system_info.snapshot(),
+        "model_info": installed[model].__dict__,
     }
     write_json(meta, meta_path)
 
@@ -96,7 +107,6 @@ def run_temperature_experiment(
                         record(item, temp, repeat, "warm")
         status = "completed"
     except Exception:
-
         status = "failed"
         raise
     finally:
@@ -134,25 +144,38 @@ def analyze_temperature(path: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.Data
         responses = [_norm(r) for r in g["response"]]
         n = len(responses)
         sims = [SequenceMatcher(None, a, b).ratio() for a, b in combinations(responses, 2)]
-        rows.append({
-            "temperature": temp, "prompt_id": prompt_id, "category": g["category"].iloc[0],
-            "n": n, "unique": len(set(responses)),
-            "exact_agreement": Counter(responses).most_common(1)[0][1] / n,
-            "similarity": mean(sims) if sims else None,
-            "quality": g["quality_score"].mean(),
-            "schema_valid_rate": g["schema_valid"].map({True: 1.0, False: 0.0}).mean(),
-            "tokens_mean": g["tokens_generated"].mean(),
-        })
+        rows.append(
+            {
+                "temperature": temp,
+                "prompt_id": prompt_id,
+                "category": g["category"].iloc[0],
+                "n": n,
+                "unique": len(set(responses)),
+                "exact_agreement": Counter(responses).most_common(1)[0][1] / n,
+                "similarity": mean(sims) if sims else None,
+                "quality": g["quality_score"].mean(),
+                "schema_valid_rate": g["schema_valid"].map({True: 1.0, False: 0.0}).mean(),
+                "tokens_mean": g["tokens_generated"].mean(),
+            }
+        )
     per_prompt = pd.DataFrame(rows).sort_values(["temperature", "prompt_id"])
-    by_temp = per_prompt.groupby("temperature").agg(
-        prompts=("prompt_id", "count"), unique_mean=("unique", "mean"),
-        exact_agreement=("exact_agreement", "mean"), similarity=("similarity", "mean"),
-        quality=("quality", "mean"), schema_valid_rate=("schema_valid_rate", "mean"),
-    ).reset_index()
+    by_temp = (
+        per_prompt.groupby("temperature")
+        .agg(
+            prompts=("prompt_id", "count"),
+            unique_mean=("unique", "mean"),
+            exact_agreement=("exact_agreement", "mean"),
+            similarity=("similarity", "mean"),
+            quality=("quality", "mean"),
+            schema_valid_rate=("schema_valid_rate", "mean"),
+        )
+        .reset_index()
+    )
     return by_temp, per_prompt, df
 
 
 # --------------------------------------------------------------- quantization
+
 
 def check_quant_compatibility(variants: list[str]) -> list[str]:
     """Return reasons a comparison is NOT valid (empty list = looks valid).
@@ -162,7 +185,6 @@ def check_quant_compatibility(variants: list[str]) -> list[str]:
     """
     problems: list[str] = []
     if len(variants) < 2:
-
         return ["Select at least two variants."]
     installed = {m.name: m for m in list_models()}
     for v in variants:
@@ -176,13 +198,16 @@ def check_quant_compatibility(variants: list[str]) -> list[str]:
             problems.append("Variants have different parameter sizes.")
         quants = [i.quantization for i in infos]
         if len(set(quants)) < len(quants):
-            problems.append(f"Two variants share a quantization level ({quants}); "
-                            "there is nothing to compare.")
+            problems.append(
+                f"Two variants share a quantization level ({quants}); there is nothing to compare."
+            )
     return problems
 
 
 def run_quantization_experiment(
-    variants: list[str], trials: int = 2, limit_per_category: int = 3,
+    variants: list[str],
+    trials: int = 2,
+    limit_per_category: int = 3,
     on_progress: ProgressFn | None = None,
 ) -> Path:
     """Benchmark quantization variants with the standard engine (same settings for all)."""
@@ -190,11 +215,12 @@ def run_quantization_experiment(
     if problems:
         raise ValueError(" ".join(problems))
     config = BenchmarkConfig.from_yaml(
-        models=variants, trials=trials, limit_per_category=limit_per_category,
+        models=variants,
+        trials=trials,
+        limit_per_category=limit_per_category,
         run_prefix="quant",
     )
     return run_benchmark(config, on_progress)
-
 
 
 def analyze_quantization(path: Path) -> pd.DataFrame:
@@ -207,10 +233,13 @@ def analyze_quantization(path: Path) -> pd.DataFrame:
     models = {}
     if meta_path.exists():
         models = json.loads(meta_path.read_text(encoding="utf-8")).get("models", {})
-    info = pd.DataFrame([
-        {"model": name, "quantization": m.get("quantization"), "disk_gb": m.get("size_gb")}
-        for name, m in models.items()
-    ], columns=["model", "quantization", "disk_gb"])
+    info = pd.DataFrame(
+        [
+            {"model": name, "quantization": m.get("quantization"), "disk_gb": m.get("size_gb")}
+            for name, m in models.items()
+        ],
+        columns=["model", "quantization", "disk_gb"],
+    )
     out = summary.merge(info, on="model", how="left")
     out["disk_mb"] = out["disk_gb"] * 1024
     out["quality_vs_best"] = out["avg_quality"] - out["avg_quality"].max()

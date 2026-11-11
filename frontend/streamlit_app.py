@@ -1,6 +1,6 @@
 """Streamlit entry point. Run from the project root:
 
-    streamlit run frontend/streamlit_app.py
+streamlit run frontend/streamlit_app.py
 """
 
 import sys
@@ -27,14 +27,18 @@ def _home() -> None:
 PAGES = {
     "home": st.Page(_home, title="Home", icon="🏠", url_path="home", default=True),
     "chat": st.Page(chat.render, title="Local Chat", icon="💬", url_path="chat"),
-    "structured": st.Page(structured.render, title="Structured Output", icon="🧩",
-                          url_path="structured"),
-    "benchmark": st.Page(benchmark.render, title="Benchmark Models", icon="⏱️",
-                         url_path="benchmark"),
-    "comparison": st.Page(comparison.render, title="Model Comparison", icon="📊",
-                          url_path="comparison"),
-    "experiments": st.Page(experiments.render, title="Experiments", icon="🧪",
-                           url_path="experiments"),
+    "structured": st.Page(
+        structured.render, title="Structured Output", icon="🧩", url_path="structured"
+    ),
+    "benchmark": st.Page(
+        benchmark.render, title="Benchmark Models", icon="⏱️", url_path="benchmark"
+    ),
+    "comparison": st.Page(
+        comparison.render, title="Model Comparison", icon="📊", url_path="comparison"
+    ),
+    "experiments": st.Page(
+        experiments.render, title="Experiments", icon="🧪", url_path="experiments"
+    ),
     "reports": st.Page(reports.render, title="Reports", icon="📄", url_path="reports"),
 }
 

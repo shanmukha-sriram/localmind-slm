@@ -5,11 +5,12 @@ into our own exceptions so the rest of the app never imports ollama exceptions.
 """
 
 import logging
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
-import time
+
 import httpx
 import ollama
 
@@ -30,7 +31,6 @@ class ModelInfo:
 
 
 @lru_cache(maxsize=1)
-
 def get_client() -> ollama.Client:
     """One shared client reuses the underlying HTTP connection."""
     return ollama.Client(host=settings.ollama_host, timeout=settings.request_timeout_s)
@@ -63,7 +63,6 @@ def is_server_up() -> bool:
 
 
 def list_models() -> list[ModelInfo]:
-
     """Return locally installed models."""
     with ollama_errors():
         response = get_client().list()
@@ -80,6 +79,8 @@ def list_models() -> list[ModelInfo]:
             )
         )
     return sorted(models, key=lambda x: x.name)
+
+
 def loaded_models() -> list[str]:
     """Names of models currently resident in memory (`ollama ps`)."""
     with ollama_errors():

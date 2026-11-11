@@ -30,7 +30,6 @@ def main() -> None:
         return
 
     params = GenerationParams(
-
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         think=False if args.no_think else None,
@@ -57,8 +56,10 @@ def main() -> None:
             continue
         s = session.last_stats
         if s:
-            print(f"\n[{s.tokens_generated} tok | {s.tokens_per_second:.1f} tok/s | "
-                  f"TTFT {s.ttft_s or 0:.2f}s | load {s.load_s:.2f}s]\n")
+            print(
+                f"\n[{s.tokens_generated} tok | {s.tokens_per_second:.1f} tok/s | "
+                f"TTFT {s.ttft_s or 0:.2f}s | load {s.load_s:.2f}s]\n"
+            )
 
 
 if __name__ == "__main__":

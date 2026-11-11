@@ -63,15 +63,14 @@ class ResourceMonitor:
         return max(self._samples)
 
     @property
-
     def mean_mb(self) -> float:
         return sum(self._samples) / len(self._samples)
 
 
 @dataclass(frozen=True)
 class LoadedModel:
-    size_mb: float   # total memory the loaded model occupies, per Ollama
-    vram_mb: float   # portion in GPU memory (0 on CPU-only machines)
+    size_mb: float  # total memory the loaded model occupies, per Ollama
+    vram_mb: float  # portion in GPU memory (0 on CPU-only machines)
 
 
 def loaded_model_memory(model: str) -> LoadedModel | None:

@@ -1,7 +1,10 @@
-import pytest
 
 from app.evaluation.quality_metrics import (
-    evaluate, score_answer_any, score_contains_all, score_json_fields, score_label,
+    evaluate,
+    score_answer_any,
+    score_contains_all,
+    score_json_fields,
+    score_label,
 )
 from app.structured_output.schemas import TicketClassification
 
@@ -32,8 +35,9 @@ def test_contains_all_with_alternatives_and_length_cap():
 
 
 def test_json_fields_partial_credit_and_any_of():
-    data = TicketClassification(category="Billing", priority="High",
-                                sentiment="Neutral", summary="Charged twice.")
+    data = TicketClassification(
+        category="Billing", priority="High", sentiment="Neutral", summary="Charged twice."
+    )
     score, detail = score_json_fields(data, {"category": "Billing", "sentiment": "Negative"})
     assert score == 0.5 and "sentiment" in detail
     ok, _ = score_json_fields(data, {"category": {"any_of": ["Account", "Billing"]}})

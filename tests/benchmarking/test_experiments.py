@@ -16,9 +16,18 @@ def _write_rows(path, rows):
 
 
 def _row(temp, response, repeat, prompt_id="qa-1", quality=1.0):
-    return {"model": "m", "prompt_id": prompt_id, "category": "qa", "phase": "warm",
-            "trial": repeat, "error": None, "temperature": temp, "response": response,
-            "quality_score": quality, "tokens_generated": 5}
+    return {
+        "model": "m",
+        "prompt_id": prompt_id,
+        "category": "qa",
+        "phase": "warm",
+        "trial": repeat,
+        "error": None,
+        "temperature": temp,
+        "response": response,
+        "quality_score": quality,
+        "tokens_generated": 5,
+    }
 
 
 def test_analysis_separates_identical_and_varied_outputs(tmp_path):
@@ -36,8 +45,11 @@ def test_analysis_separates_identical_and_varied_outputs(tmp_path):
 
 
 def test_analysis_ignores_warmup_and_errors(tmp_path):
-    rows = [_row(0.0, "Paris", 1), {**_row(0.0, "x", 2), "phase": "warmup"},
-            {**_row(0.0, "y", 3), "error": "boom"}]
+    rows = [
+        _row(0.0, "Paris", 1),
+        {**_row(0.0, "x", 2), "phase": "warmup"},
+        {**_row(0.0, "y", 3), "error": "boom"},
+    ]
     path = tmp_path / "temp_x.jsonl"
     _write_rows(path, rows)
     _, per_prompt, _ = exp.analyze_temperature(path)
@@ -46,8 +58,15 @@ def test_analysis_ignores_warmup_and_errors(tmp_path):
 
 def test_experiment_order_and_rows(monkeypatch, tmp_path):
     def fake_trial(model, item, config, phase, trial):
-        return {"model": model, "prompt_id": item["id"], "category": item["category"],
-                "phase": phase, "trial": trial, "error": None, "response": "x"}
+        return {
+            "model": model,
+            "prompt_id": item["id"],
+            "category": item["category"],
+            "phase": phase,
+            "trial": trial,
+            "error": None,
+            "response": "x",
+        }
 
     monkeypatch.setattr(exp, "run_trial", fake_trial)
     monkeypatch.setattr(exp, "load_prompts", lambda cfg: PROMPTS)

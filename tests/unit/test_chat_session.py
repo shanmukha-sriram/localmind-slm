@@ -22,8 +22,11 @@ class FakeClient:
 
 
 def _reply(text):
-    return [_chunk("Hel"), _chunk(text[3:]), _chunk(done=True, eval_count=10,
-            eval_duration=2_000_000_000)]
+    return [
+        _chunk("Hel"),
+        _chunk(text[3:]),
+        _chunk(done=True, eval_count=10, eval_duration=2_000_000_000),
+    ]
 
 
 def test_streaming_collects_text_stats_and_history(monkeypatch):
@@ -32,8 +35,10 @@ def test_streaming_collects_text_stats_and_history(monkeypatch):
     session = gen.ChatSession(model="m")
 
     assert "".join(session.send_stream("hi")) == "Hello!"
-    assert session.history == [{"role": "user", "content": "hi"},
-                               {"role": "assistant", "content": "Hello!"}]
+    assert session.history == [
+        {"role": "user", "content": "hi"},
+        {"role": "assistant", "content": "Hello!"},
+    ]
     assert session.last_stats.tokens_per_second == pytest.approx(5.0)
     assert session.last_stats.ttft_s is not None
 

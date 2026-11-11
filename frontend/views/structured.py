@@ -20,8 +20,11 @@ def render() -> None:
     model = c1.selectbox("Model", [m.name for m in models])
     key = c2.selectbox("Schema", list(SCHEMAS), format_func=lambda k: SCHEMAS[k].label)
     c3, c4 = st.columns(2)
-    constrained = c3.toggle("Schema-constrained decoding", value=True,
-                            help="Off = rely on the prompt alone, so you can watch retries happen.")
+    constrained = c3.toggle(
+        "Schema-constrained decoding",
+        value=True,
+        help="Off = rely on the prompt alone, so you can watch retries happen.",
+    )
     temperature = c4.slider("Temperature", 0.0, 1.0, 0.0, 0.05)
     text = st.text_area("Input text", value=SAMPLES[key], height=140, key=f"text_{key}")
     with st.expander("JSON Schema (generated from the Pydantic model)"):
@@ -29,12 +32,12 @@ def render() -> None:
 
     if not st.button("Generate", type="primary"):
         return
-    params = GenerationParams(temperature=temperature, max_tokens=1024,
-                              think=False if model.startswith("qwen3") else None)
+    params = GenerationParams(
+        temperature=temperature, max_tokens=1024, think=False if model.startswith("qwen3") else None
+    )
     with st.spinner("Generating..."):
         try:
-            result = generate_structured(model, key, text, params=params,
-                                         constrained=constrained)
+            result = generate_structured(model, key, text, params=params, constrained=constrained)
         except LocalMindError as exc:
             st.error(str(exc))
             return
@@ -48,8 +51,10 @@ def render() -> None:
     if result.ok:
         st.success("Output is valid JSON and matches the schema.")
         st.json(result.data.model_dump())
-        st.info("Valid does not mean correct. Check the values yourself: schema validation "
-                "cannot tell whether the category or summary is actually right.")
+        st.info(
+            "Valid does not mean correct. Check the values yourself: schema validation "
+            "cannot tell whether the category or summary is actually right."
+        )
     else:
         st.error(f"Failed after {result.attempts} attempts.")
     with st.expander("Raw model output for each attempt"):

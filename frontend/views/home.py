@@ -5,9 +5,9 @@ from dataclasses import asdict
 import pandas as pd
 import streamlit as st
 
-from frontend.components.sidebar import installed_models
-from app.utils import system_info
 from app.models.ollama_client import is_server_up
+from app.utils import system_info
+from frontend.components.sidebar import installed_models
 
 
 def render(pages: dict) -> None:
@@ -21,8 +21,9 @@ def render(pages: dict) -> None:
         st.subheader("System")
         snap = system_info.snapshot()
         st.table(pd.Series(snap, name="value").astype(str))
-        st.caption("GPU offload per model appears in benchmark data as model_vram_mb "
-                   "(0 means CPU-only).")
+        st.caption(
+            "GPU offload per model appears in benchmark data as model_vram_mb (0 means CPU-only)."
+        )
     with right:
         st.subheader("Ollama")
         if is_server_up():
@@ -37,9 +38,14 @@ def render(pages: dict) -> None:
 
     st.subheader("Quick links")
     cols = st.columns(3)
-    labels = [("chat", "Local Chat"), ("structured", "Structured Output"),
-              ("benchmark", "Benchmark Models"), ("comparison", "Model Comparison"),
-              ("experiments", "Experiments"), ("reports", "Reports")]
+    labels = [
+        ("chat", "Local Chat"),
+        ("structured", "Structured Output"),
+        ("benchmark", "Benchmark Models"),
+        ("comparison", "Model Comparison"),
+        ("experiments", "Experiments"),
+        ("reports", "Reports"),
+    ]
     for i, (key, label) in enumerate(labels):
         with cols[i % 3]:
             st.page_link(pages[key], label=label)

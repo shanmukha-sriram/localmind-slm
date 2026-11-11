@@ -52,13 +52,17 @@ def write_artifacts(
 ) -> list[Path]:
     """Write CSV/JSON/Markdown (and charts HTML if given). Returns the files written."""
     files = {
-        processed_dir / f"{a.tag}_trials.csv": lambda p: write_csv(a.trials.drop(columns=["response"]), p),
+        processed_dir / f"{a.tag}_trials.csv": lambda p: write_csv(
+            a.trials.drop(columns=["response"]), p
+        ),
         processed_dir / f"{a.tag}_summary.csv": lambda p: write_csv(a.summary, p),
         processed_dir / f"{a.tag}_by_category.csv": lambda p: write_csv(a.by_category, p),
         processed_dir / f"{a.tag}_summary.json": lambda p: write_json(
-            json.loads(a.summary.to_json(orient="records")), p),
+            json.loads(a.summary.to_json(orient="records")), p
+        ),
         reports_dir / f"{a.tag}_report.md": lambda p: atomic_write_text(
-            p, build_markdown_report(a.summary, a.by_category, a.ranked, a.explanation, a.meta)),
+            p, build_markdown_report(a.summary, a.by_category, a.ranked, a.explanation, a.meta)
+        ),
     }
     if charts_html:
         files[reports_dir / f"{a.tag}_charts.html"] = lambda p: atomic_write_text(p, charts_html)

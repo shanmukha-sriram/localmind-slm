@@ -18,9 +18,19 @@ def test_summary_separates_cold_warm_and_errors(tmp_path):
     base = {"model": "m", "prompt_id": "p", "category": "qa", "error": None}
     rows = [
         {**base, "phase": "cold", "load_s": 3.0, "ttft_s": 4.0, "wall_s": 6.0},
-        {**base, "phase": "warm", "wall_s": 2.0, "ttft_s": 0.5, "load_s": 0.0,
-         "prompt_eval_s": 0.1, "generation_s": 2.0, "tokens_generated": 20,
-         "tokens_per_second": 10.0, "ram_peak_mb": 3000, "quality_score": 1.0},
+        {
+            **base,
+            "phase": "warm",
+            "wall_s": 2.0,
+            "ttft_s": 0.5,
+            "load_s": 0.0,
+            "prompt_eval_s": 0.1,
+            "generation_s": 2.0,
+            "tokens_generated": 20,
+            "tokens_per_second": 10.0,
+            "ram_peak_mb": 3000,
+            "quality_score": 1.0,
+        },
         {**base, "phase": "warm", "error": "boom"},
     ]
     path = tmp_path / "run_x.jsonl"

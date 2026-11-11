@@ -31,7 +31,6 @@ class StructuredResult:
     def ok(self) -> bool:
         return self.data is not None
 
-
     def unwrap(self) -> BaseModel:
         """Return validated data or raise a clear error."""
         if self.data is None:
@@ -47,9 +46,8 @@ def build_messages(spec: SchemaSpec, user_text: str, constrained: bool) -> list[
     system = spec.instruction
     if not constrained:
         # Without schema-constrained decoding, the model must be told the shape in text.
-        system += (
-            "\nRespond with ONLY a JSON object that matches this JSON Schema:\n"
-            + json.dumps(spec.model.model_json_schema())
+        system += "\nRespond with ONLY a JSON object that matches this JSON Schema:\n" + json.dumps(
+            spec.model.model_json_schema()
         )
     return [{"role": "system", "content": system}, {"role": "user", "content": user_text}]
 

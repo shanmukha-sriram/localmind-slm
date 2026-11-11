@@ -14,7 +14,9 @@ def _powershell(command: str) -> str:
     try:
         result = subprocess.run(
             ["powershell", "-NoProfile", "-Command", command],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         return result.stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
@@ -47,20 +49,35 @@ def get_gpu_info() -> list[dict]:
     """Query NVIDIA GPUs via nvidia-smi; fall back to listing adapter names."""
     try:
         out = subprocess.run(
-            ["nvidia-smi", "--query-gpu=name,memory.total,memory.used,driver_version",
-             "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=10, check=True,
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total,memory.used,driver_version",
+                "--format=csv,noheader,nounits",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=True,
         ).stdout.strip()
         gpus = []
         for line in out.splitlines():
             name, total, used, driver = [p.strip() for p in line.split(",")]
-            gpus.append({"name": name, "vram_total_mb": int(total),
-                         "vram_used_mb": int(used), "driver": driver})
+            gpus.append(
+                {
+                    "name": name,
+                    "vram_total_mb": int(total),
+                    "vram_used_mb": int(used),
+                    "driver": driver,
+                }
+            )
         return gpus
     except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         names = _powershell("(Get-CimInstance Win32_VideoController).Name")
-        return [{"name": n, "vram_total_mb": None, "note": "Check VRAM in Task Manager"}
-                for n in names.splitlines() if n]
+        return [
+            {"name": n, "vram_total_mb": None, "note": "Check VRAM in Task Manager"}
+            for n in names.splitlines()
+            if n
+        ]
 
 
 def main() -> None:

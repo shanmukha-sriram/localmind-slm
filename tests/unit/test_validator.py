@@ -1,8 +1,10 @@
 from app.structured_output.schemas import TicketClassification
 from app.structured_output.validator import validate_output
 
-VALID = ('{"category": "Billing", "priority": "High", '
-         '"sentiment": "Negative", "summary": "Charged twice."}')
+VALID = (
+    '{"category": "Billing", "priority": "High", '
+    '"sentiment": "Negative", "summary": "Charged twice."}'
+)
 
 
 def test_valid_output():
@@ -28,7 +30,6 @@ def test_valid_json_but_bad_enum_reports_schema_stage():
 def test_missing_field_reports_schema_stage():
     out = validate_output('{"category": "Billing"}', TicketClassification)
     assert out.stage == "schema" and "priority" in out.error
-
 
 
 def test_semantically_wrong_but_valid_output_passes():

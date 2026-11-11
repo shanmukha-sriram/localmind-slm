@@ -31,7 +31,6 @@ class ResumeInfo(BaseModel):
     education: list[Education] = Field(default_factory=list)
 
 
-
 class ActionItem(BaseModel):
     task: str
     owner: str | None = None
@@ -56,17 +55,22 @@ class SchemaSpec:
 
 SCHEMAS: dict[str, SchemaSpec] = {
     "ticket": SchemaSpec(
-        "ticket", "Support ticket classification", TicketClassification,
+        "ticket",
+        "Support ticket classification",
+        TicketClassification,
         "You classify customer support tickets. Use only the information in the ticket.",
     ),
     "resume": SchemaSpec(
-        "resume", "Resume information extraction", ResumeInfo,
+        "resume",
+        "Resume information extraction",
+        ResumeInfo,
         "You extract structured information from resumes. Use null for anything not stated. "
         "Never invent facts.",
-
     ),
     "meeting": SchemaSpec(
-        "meeting", "Meeting information extraction", MeetingInfo,
+        "meeting",
+        "Meeting information extraction",
+        MeetingInfo,
         "You extract structured information from meeting notes. Use null or empty lists "
         "for anything not stated. Never invent facts.",
     ),
@@ -81,11 +85,12 @@ def get_schema(key: str) -> SchemaSpec:
             f"Unknown schema '{key}'. Available: {', '.join(SCHEMAS)}"
         ) from None
 
+
 SAMPLES: dict[str, str] = {
     "ticket": "I was charged twice for my subscription this month and nobody has replied "
-              "to my emails. This is unacceptable, fix it today.",
+    "to my emails. This is unacceptable, fix it today.",
     "resume": "Priya Nair, priya@example.com. Data analyst with 3 years at Infosys. "
-              "B.Tech in Computer Science, VIT, 2021. Skills: Python, SQL, Power BI.",
+    "B.Tech in Computer Science, VIT, 2021. Skills: Python, SQL, Power BI.",
     "meeting": "Weekly sync on 12 March. Present: Ravi, Meera, John. We decided to delay the "
-               "launch to April. Meera will update the roadmap by Friday.",
+    "launch to April. Meera will update the roadmap by Friday.",
 }

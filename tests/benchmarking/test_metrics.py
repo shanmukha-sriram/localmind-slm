@@ -30,14 +30,27 @@ def test_aggregate_tps_zero_duration():
     assert aggregate_tps(10, 0) == 0.0
 
 
-
 def test_recommendation_is_not_just_the_fastest():
-    summary = pd.DataFrame([
-        {"model": "fast", "avg_quality": 0.4, "agg_tps": 30, "avg_wall_s": 2,
-         "avg_ram_peak_mb": 2000, "schema_success_rate": 0.5},
-        {"model": "good", "avg_quality": 0.9, "agg_tps": 15, "avg_wall_s": 4,
-         "avg_ram_peak_mb": 3000, "schema_success_rate": 1.0},
-    ])
+    summary = pd.DataFrame(
+        [
+            {
+                "model": "fast",
+                "avg_quality": 0.4,
+                "agg_tps": 30,
+                "avg_wall_s": 2,
+                "avg_ram_peak_mb": 2000,
+                "schema_success_rate": 0.5,
+            },
+            {
+                "model": "good",
+                "avg_quality": 0.9,
+                "agg_tps": 15,
+                "avg_wall_s": 4,
+                "avg_ram_peak_mb": 3000,
+                "schema_success_rate": 1.0,
+            },
+        ]
+    )
     ranked = recommend(summary)
     assert ranked.iloc[0]["model"] == "good"
     assert ranked.iloc[0]["score"] == pytest.approx(0.55)  # 0.40 quality + 0.15 reliability

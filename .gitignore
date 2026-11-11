@@ -12,3 +12,6 @@ results/raw/*
 results/processed/*
 results/reports/*
 !results/**/.gitkeep
+.coverage
+htmlcov/
+*.tmp

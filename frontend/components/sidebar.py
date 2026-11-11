@@ -30,7 +30,6 @@ def render_sidebar() -> None:
         else:
             st.error("Server not reachable. Start the Ollama app.")
         if st.button("Refresh models"):
-
             _cached_models.clear()
             st.rerun()
         snap = system_info.snapshot()

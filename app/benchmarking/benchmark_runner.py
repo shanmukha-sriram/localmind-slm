@@ -30,7 +30,6 @@ ProgressFn = Callable[[int, int, str], None]
 
 
 @dataclass
-
 class BenchmarkConfig:
     models: list[str]
     prompts_path: Path = ROOT / "data" / "benchmark" / "prompts.json"
@@ -97,12 +96,16 @@ def run_trial(
         fmt = spec.model.model_json_schema()
         messages = build_messages(spec, item["prompt"], constrained=True)
 
-
     row: dict[str, Any] = {
-        "model": model, "prompt_id": item["id"], "category": item["category"],
-        "phase": phase, "trial": trial, "error": None,
+        "model": model,
+        "prompt_id": item["id"],
+        "category": item["category"],
+        "phase": phase,
+        "trial": trial,
+        "error": None,
         "timestamp": datetime.now().isoformat(timespec="seconds"),
-        "json_valid": None, "schema_valid": None,
+        "json_valid": None,
+        "schema_valid": None,
     }
     parts: list[str] = []
     stats = None
@@ -132,17 +135,26 @@ def run_trial(
         structured = outcome.data
 
     score, detail = evaluate(item, response, structured)
+    ram_ok = monitor.baseline_mb > 0  # 0 means no local ollama process was visible
 
     row.update(
-        ttft_s=stats.ttft_s, wall_s=stats.wall_s, load_s=stats.load_s,
-        prompt_eval_s=stats.prompt_eval_s, generation_s=stats.generation_s,
-        ollama_total_s=stats.total_s, tokens_generated=stats.tokens_generated,
-        prompt_tokens=stats.prompt_tokens, tokens_per_second=stats.tokens_per_second,
-        ram_baseline_mb=monitor.baseline_mb, ram_peak_mb=monitor.peak_mb,
-        ram_mean_mb=monitor.mean_mb,
+        ttft_s=stats.ttft_s,
+        wall_s=stats.wall_s,
+        load_s=stats.load_s,
+        prompt_eval_s=stats.prompt_eval_s,
+        generation_s=stats.generation_s,
+        ollama_total_s=stats.total_s,
+        tokens_generated=stats.tokens_generated,
+        prompt_tokens=stats.prompt_tokens,
+        tokens_per_second=stats.tokens_per_second,
+        ram_baseline_mb=monitor.baseline_mb if ram_ok else None,
+        ram_peak_mb=monitor.peak_mb if ram_ok else None,
+        ram_mean_mb=monitor.mean_mb if ram_ok else None,
         model_mem_mb=loaded.size_mb if loaded else None,
         model_vram_mb=loaded.vram_mb if loaded else None,
-        quality_score=score, quality_detail=detail, response=response,
+        quality_score=score,
+        quality_detail=detail,
+        response=response,
     )
     return row
 
@@ -152,13 +164,20 @@ def _describe(row: dict[str, Any]) -> str:
     if row["error"]:
         return f"{head} | ERROR: {row['error']}"
     q = row["quality_score"]
-    return (f"{head} | wall {row['wall_s']:.1f}s | {row['tokens_per_second']:.1f} tok/s | "
-            f"quality {'n/a' if q is None else f'{q:.2f}'}")
+    return (
+        f"{head} | wall {row['wall_s']:.1f}s | {row['tokens_per_second']:.1f} tok/s | "
+        f"quality {'n/a' if q is None else f'{q:.2f}'}"
+    )
 
 
 def _benchmark_model(
-    model: str, prompts: list[dict[str, Any]], config: BenchmarkConfig,
-    sink: TextIO, progress: ProgressFn, done: int, total: int,
+    model: str,
+    prompts: list[dict[str, Any]],
+    config: BenchmarkConfig,
+    sink: TextIO,
+    progress: ProgressFn,
+    done: int,
+    total: int,
 ) -> int:
     def record(item: dict[str, Any], phase: str, trial: int) -> None:
         nonlocal done
@@ -170,19 +189,19 @@ def _benchmark_model(
         progress(done, total, _describe(row))
 
     try:
-        for name in loaded_models():          # guarantee a true cold start
+        for name in loaded_models():  # guarantee a true cold start
             unload_model(name)
         record(prompts[0], "cold", 0)
-        for i in range(config.warmup_runs):   # discarded in analysis
+        for i in range(config.warmup_runs):  # discarded in analysis
             record(prompts[i % len(prompts)], "warmup", 0)
-        for trial in range(1, config.trials + 1):   # trial-major order spreads drift
+        for trial in range(1, config.trials + 1):  # trial-major order spreads drift
             for item in prompts:
                 record(item, "warm", trial)
     except ModelNotFoundError as exc:
         logger.error("Skipping %s: %s", model, exc)
     finally:
         try:
-            unload_model(model)               # free RAM before the next model
+            unload_model(model)  # free RAM before the next model
         except LocalMindError:
             pass
     return done
@@ -198,8 +217,11 @@ def run_benchmark(config: BenchmarkConfig, on_progress: ProgressFn | None = None
     installed = {m.name: m for m in list_models()}
 
     available = [m for m in config.models if m in installed]
-    skipped = [{"model": m, "reason": f"not installed (run: ollama pull {m})"}
-               for m in config.models if m not in installed]
+    skipped = [
+        {"model": m, "reason": f"not installed (run: ollama pull {m})"}
+        for m in config.models
+        if m not in installed
+    ]
     total = (1 + config.warmup_runs + len(prompts) * config.trials) * len(available)
 
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -209,13 +231,19 @@ def run_benchmark(config: BenchmarkConfig, on_progress: ProgressFn | None = None
 
     snap = system_info.snapshot()
     if snap["ram_available_gb"] < 6:
-        logger.warning("Only %.1f GB RAM available; close other apps for fair results.",
-                       snap["ram_available_gb"])
+        logger.warning(
+            "Only %.1f GB RAM available; close other apps for fair results.",
+            snap["ram_available_gb"],
+        )
     meta: dict[str, Any] = {
-        "run_id": run_id, "started_at": datetime.now().isoformat(timespec="seconds"),
-        "status": "running", "config": asdict(config), "system": snap,
+        "run_id": run_id,
+        "started_at": datetime.now().isoformat(timespec="seconds"),
+        "status": "running",
+        "config": asdict(config),
+        "system": snap,
         "models": {m: asdict(installed[m]) for m in available},
-        "skipped": skipped, "n_prompts": len(prompts),
+        "skipped": skipped,
+        "n_prompts": len(prompts),
     }
     write_json(meta, meta_path)
 

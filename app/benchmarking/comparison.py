@@ -1,24 +1,53 @@
 """Load raw results, summarize per model/category, and recommend a model."""
 
+import json
 from pathlib import Path
 
 import pandas as pd
-import json
+
 from app.benchmarking.latency import summarize
 from app.benchmarking.throughput import aggregate_tps
 from app.utils.file_handler import read_jsonl
 
 NUMERIC = [
-    "trial", "ttft_s", "wall_s", "load_s", "prompt_eval_s", "generation_s", "ollama_total_s",
-    "tokens_generated", "prompt_tokens", "tokens_per_second", "ram_baseline_mb", "ram_peak_mb",
-    "ram_mean_mb", "model_mem_mb", "model_vram_mb", "quality_score",
+    "trial",
+    "ttft_s",
+    "wall_s",
+    "load_s",
+    "prompt_eval_s",
+    "generation_s",
+    "ollama_total_s",
+    "tokens_generated",
+    "prompt_tokens",
+    "tokens_per_second",
+    "ram_baseline_mb",
+    "ram_peak_mb",
+    "ram_mean_mb",
+    "model_mem_mb",
+    "model_vram_mb",
+    "quality_score",
 ]
-TEXT = ["model", "prompt_id", "category", "phase", "error", "quality_detail", "response",
-        "timestamp", "json_valid", "schema_valid"]
+TEXT = [
+    "model",
+    "prompt_id",
+    "category",
+    "phase",
+    "error",
+    "quality_detail",
+    "response",
+    "timestamp",
+    "json_valid",
+    "schema_valid",
+]
 
 # Assumption, not a law: quality matters most. Change these to match your own priorities.
-DEFAULT_WEIGHTS = {"quality": 0.40, "speed": 0.20, "latency": 0.15, "memory": 0.10,
-                   "reliability": 0.15}
+DEFAULT_WEIGHTS = {
+    "quality": 0.40,
+    "speed": 0.20,
+    "latency": 0.15,
+    "memory": 0.10,
+    "reliability": 0.15,
+}
 
 
 def latest_run(results_dir: Path) -> Path:
@@ -61,29 +90,33 @@ def summarize_models(df: pd.DataFrame) -> pd.DataFrame:
         cold = g[(g["phase"] == "cold") & g["error"].isna()]
         wall = summarize(ok["wall_s"])
         structured = ok[ok["category"] == "structured_json"]
-        rows.append({
-            "model": model,
-
-            "trials_ok": len(ok),
-            "trials_failed": len(warm) - len(ok),
-            "avg_wall_s": wall["mean"], "median_wall_s": wall["median"],
-            "min_wall_s": wall["min"], "max_wall_s": wall["max"], "p95_wall_s": wall["p95"],
-            "avg_ttft_s": summarize(ok["ttft_s"])["mean"],
-            "avg_ttft_overhead_s": summarize(ok["ttft_overhead_s"])["mean"],
-            "avg_tps": summarize(ok["tokens_per_second"])["mean"],
-            "agg_tps": aggregate_tps(ok["tokens_generated"].sum(), ok["generation_s"].sum()),
-            "avg_ram_peak_mb": summarize(ok["ram_peak_mb"])["mean"],
-            "max_ram_peak_mb": ok["ram_peak_mb"].max(),
-            "model_mem_mb": ok["model_mem_mb"].max(),
-            "model_vram_mb": ok["model_vram_mb"].max(),
-            "avg_quality": ok["quality_score"].mean(),
-            "schema_success_rate": (
-                structured["schema_valid"].astype(float).mean() if len(structured) else None
-            ),
-            "cold_load_s": cold["load_s"].iloc[0] if len(cold) else None,
-            "cold_ttft_s": cold["ttft_s"].iloc[0] if len(cold) else None,
-            "cold_wall_s": cold["wall_s"].iloc[0] if len(cold) else None,
-        })
+        rows.append(
+            {
+                "model": model,
+                "trials_ok": len(ok),
+                "trials_failed": len(warm) - len(ok),
+                "avg_wall_s": wall["mean"],
+                "median_wall_s": wall["median"],
+                "min_wall_s": wall["min"],
+                "max_wall_s": wall["max"],
+                "p95_wall_s": wall["p95"],
+                "avg_ttft_s": summarize(ok["ttft_s"])["mean"],
+                "avg_ttft_overhead_s": summarize(ok["ttft_overhead_s"])["mean"],
+                "avg_tps": summarize(ok["tokens_per_second"])["mean"],
+                "agg_tps": aggregate_tps(ok["tokens_generated"].sum(), ok["generation_s"].sum()),
+                "avg_ram_peak_mb": summarize(ok["ram_peak_mb"])["mean"],
+                "max_ram_peak_mb": ok["ram_peak_mb"].max(),
+                "model_mem_mb": ok["model_mem_mb"].max(),
+                "model_vram_mb": ok["model_vram_mb"].max(),
+                "avg_quality": ok["quality_score"].mean(),
+                "schema_success_rate": (
+                    structured["schema_valid"].astype(float).mean() if len(structured) else None
+                ),
+                "cold_load_s": cold["load_s"].iloc[0] if len(cold) else None,
+                "cold_ttft_s": cold["ttft_s"].iloc[0] if len(cold) else None,
+                "cold_wall_s": cold["wall_s"].iloc[0] if len(cold) else None,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -91,11 +124,14 @@ def summarize_by_category(df: pd.DataFrame) -> pd.DataFrame:
     return (
         _ok_warm(df)
         .groupby(["model", "category"])
-        .agg(n=("prompt_id", "count"), quality=("quality_score", "mean"),
-             avg_wall_s=("wall_s", "mean"), avg_tps=("tokens_per_second", "mean"))
+        .agg(
+            n=("prompt_id", "count"),
+            quality=("quality_score", "mean"),
+            avg_wall_s=("wall_s", "mean"),
+            avg_tps=("tokens_per_second", "mean"),
+        )
         .reset_index()
     )
-
 
 
 def _minmax(series: pd.Series, higher_is_better: bool) -> pd.Series:
@@ -131,7 +167,6 @@ def _best(df: pd.DataFrame, col: str, highest: bool) -> str | None:
     return valid.loc[valid[col].idxmax() if highest else valid[col].idxmin(), "model"]
 
 
-
 def explain(ranked: pd.DataFrame) -> str:
     """Plain-language recommendation that names the trade-offs."""
     if ranked.empty:
@@ -140,15 +175,22 @@ def explain(ranked: pd.DataFrame) -> str:
     fastest = _best(ranked, "agg_tps", True)
     best_quality = _best(ranked, "avg_quality", True)
     smallest = _best(ranked, "avg_ram_peak_mb", False)
-    text = (f"Highest weighted score: {top}. Fastest generation: {fastest}. "
-            f"Highest quality: {best_quality}. Lowest peak RAM: {smallest}.")
+    text = (
+        f"Highest weighted score: {top}. Fastest generation: {fastest}. "
+        f"Highest quality: {best_quality}. Lowest peak RAM: {smallest}."
+    )
     if top != fastest:
-        text += (" The top-scoring model is not the fastest: speed is only one of five "
-                 "weighted factors, and here quality or reliability outweighed it.")
-    text += (" Scores are relative to the models you tested and depend on the weights in "
-             "DEFAULT_WEIGHTS, which are an assumption. Check the per-category quality "
-             "before trusting a single number.")
+        text += (
+            " The top-scoring model is not the fastest: speed is only one of five "
+            "weighted factors, and here quality or reliability outweighed it."
+        )
+    text += (
+        " Scores are relative to the models you tested and depend on the weights in "
+        "DEFAULT_WEIGHTS, which are an assumption. Check the per-category quality "
+        "before trusting a single number."
+    )
     return text
+
 
 def list_runs(results_dir: Path, prefix: str = "run") -> list[Path]:
     """Raw JSONL files for one kind of run (run, temp or quant), oldest first."""
@@ -164,7 +206,10 @@ def load_model_info(paths: list[Path]) -> pd.DataFrame:
             continue
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         for name, info in meta.get("models", {}).items():
-            rows[name] = {"model": name, "size_gb": info.get("size_gb"),
-                          "parameter_size": info.get("parameter_size"),
-                          "quantization": info.get("quantization")}
+            rows[name] = {
+                "model": name,
+                "size_gb": info.get("size_gb"),
+                "parameter_size": info.get("parameter_size"),
+                "quantization": info.get("quantization"),
+            }
     return pd.DataFrame(list(rows.values()))

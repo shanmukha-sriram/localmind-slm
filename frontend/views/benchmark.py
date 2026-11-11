@@ -11,9 +11,19 @@ from frontend.components.progress import progress_callback
 from frontend.components.sidebar import installed_models
 from frontend.components.tables import show_table
 
-SUMMARY_COLS = ["model", "trials_ok", "trials_failed", "avg_wall_s", "median_wall_s",
-                "avg_ttft_s", "avg_ttft_overhead_s", "agg_tps", "avg_ram_peak_mb",
-                "avg_quality", "schema_success_rate"]
+SUMMARY_COLS = [
+    "model",
+    "trials_ok",
+    "trials_failed",
+    "avg_wall_s",
+    "median_wall_s",
+    "avg_ttft_s",
+    "avg_ttft_overhead_s",
+    "agg_tps",
+    "avg_ram_peak_mb",
+    "avg_quality",
+    "schema_success_rate",
+]
 
 
 def render() -> None:
@@ -25,8 +35,7 @@ def render() -> None:
 
     all_prompts = load_prompts(BenchmarkConfig(models=[]))
     categories = sorted({p["category"] for p in all_prompts})
-    selected = st.multiselect("Models", [m.name for m in models],
-                              default=[models[0].name])
+    selected = st.multiselect("Models", [m.name for m in models], default=[models[0].name])
     chosen_cats = st.multiselect("Categories", categories, default=categories)
     c1, c2, c3 = st.columns(3)
     limit = c1.slider("Prompts per category (0 = all)", 0, 6, 2)
@@ -35,14 +44,22 @@ def render() -> None:
     max_tokens = c3.select_slider("Max output tokens", [64, 128, 256, 384, 512], value=256)
 
     config = BenchmarkConfig.from_yaml(
-        models=selected, trials=trials, max_tokens=max_tokens, categories=chosen_cats or None,
-        limit_per_category=limit or None)
+        models=selected,
+        trials=trials,
+        max_tokens=max_tokens,
+        categories=chosen_cats or None,
+        limit_per_category=limit or None,
+    )
     n_prompts = len(load_prompts(config))
-    st.caption(f"{n_prompts} prompts x {trials} trials + cold start + warm-up = "
-               f"{n_prompts * trials + 1 + config.warmup_runs} requests per model.")
-    st.warning("Don't touch any widget while a run is in progress: Streamlit restarts the "
-               "script and stops the run (finished trials stay saved). For long runs use "
-               "`python -m scripts.run_benchmark`.")
+    st.caption(
+        f"{n_prompts} prompts x {trials} trials + cold start + warm-up = "
+        f"{n_prompts * trials + 1 + config.warmup_runs} requests per model."
+    )
+    st.warning(
+        "Don't touch any widget while a run is in progress: Streamlit restarts the "
+        "script and stops the run (finished trials stay saved). For long runs use "
+        "`python -m scripts.run_benchmark`."
+    )
 
     if st.button("Start benchmark", type="primary", disabled=not selected):
         try:

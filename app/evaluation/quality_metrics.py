@@ -63,7 +63,6 @@ def score_json_fields(data: BaseModel | None, expected: dict[str, Any]) -> tuple
 
 def evaluate(
     item: dict[str, Any], response: str, structured: BaseModel | None = None
-
 ) -> tuple[float | None, str]:
     """Score one response against its prompt's `eval` block. Returns (score, detail)."""
     spec = item.get("eval")

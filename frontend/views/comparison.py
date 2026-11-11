@@ -9,8 +9,20 @@ from frontend.components.charts import build_figures
 from frontend.components.tables import show_table
 
 RAW = ROOT / "results" / "raw"
-PERF_COLS = ["model", "trials_ok", "trials_failed", "avg_wall_s", "median_wall_s", "min_wall_s",
-             "max_wall_s", "p95_wall_s", "avg_ttft_s", "avg_ttft_overhead_s", "agg_tps", "avg_tps"]
+PERF_COLS = [
+    "model",
+    "trials_ok",
+    "trials_failed",
+    "avg_wall_s",
+    "median_wall_s",
+    "min_wall_s",
+    "max_wall_s",
+    "p95_wall_s",
+    "avg_ttft_s",
+    "avg_ttft_overhead_s",
+    "agg_tps",
+    "avg_tps",
+]
 MEM_COLS = ["model", "avg_ram_peak_mb", "max_ram_peak_mb", "model_mem_mb", "model_vram_mb"]
 COLD_COLS = ["model", "cold_load_s", "cold_ttft_s", "cold_wall_s"]
 
@@ -30,8 +42,9 @@ def render() -> None:
     paths = [RAW / n for n in chosen]
 
     with st.expander("Recommendation weights (an assumption you can change)"):
-
-        raw_w = {k: st.slider(k.capitalize(), 0.0, 1.0, v, 0.05) for k, v in DEFAULT_WEIGHTS.items()}
+        raw_w = {
+            k: st.slider(k.capitalize(), 0.0, 1.0, v, 0.05) for k, v in DEFAULT_WEIGHTS.items()
+        }
     total = sum(raw_w.values())
     if total == 0:
         st.error("At least one weight must be above zero.")
@@ -47,8 +60,10 @@ def render() -> None:
     show_table(load_model_info(paths))
     st.subheader("Warm-start performance")
     show_table(a.summary, PERF_COLS)
-    st.caption("avg_ttft_overhead_s = TTFT minus load minus prompt evaluation: time not "
-               "explained by the model itself.")
+    st.caption(
+        "avg_ttft_overhead_s = TTFT minus load minus prompt evaluation: time not "
+        "explained by the model itself."
+    )
     if (a.summary["trials_failed"] > 0).any():
         st.warning("Some trials failed and are excluded from the averages above.")
     c1, c2 = st.columns(2)
@@ -73,6 +88,17 @@ def render() -> None:
     show_table(a.by_category)
 
     st.subheader("Recommendation")
-    show_table(a.ranked, ["model", "avg_quality", "agg_tps", "avg_wall_s", "avg_ram_peak_mb",
-                          "schema_success_rate", "score"], decimals=3)
+    show_table(
+        a.ranked,
+        [
+            "model",
+            "avg_quality",
+            "agg_tps",
+            "avg_wall_s",
+            "avg_ram_peak_mb",
+            "schema_success_rate",
+            "score",
+        ],
+        decimals=3,
+    )
     st.info(a.explanation)

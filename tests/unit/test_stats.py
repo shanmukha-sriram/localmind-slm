@@ -7,9 +7,12 @@ from app.inference.generator import GenerationStats
 
 def test_nanoseconds_converted_and_tps_computed():
     resp = SimpleNamespace(
-        eval_count=50, eval_duration=2_000_000_000,
-        prompt_eval_count=10, prompt_eval_duration=500_000_000,
-        load_duration=1_500_000_000, total_duration=4_000_000_000,
+        eval_count=50,
+        eval_duration=2_000_000_000,
+        prompt_eval_count=10,
+        prompt_eval_duration=500_000_000,
+        load_duration=1_500_000_000,
+        total_duration=4_000_000_000,
     )
     s = GenerationStats.from_response(resp, "m", wall_s=4.2, ttft_s=0.9)
     assert s.generation_s == pytest.approx(2.0)

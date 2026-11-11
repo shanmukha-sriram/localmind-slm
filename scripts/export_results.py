@@ -33,9 +33,18 @@ def main() -> None:
 
     write_artifacts(a, processed, reports, html)
 
-    cols = ["model", "trials_ok", "trials_failed", "avg_wall_s", "avg_ttft_s",
-            "avg_ttft_overhead_s", "agg_tps", "avg_ram_peak_mb", "avg_quality",
-            "schema_success_rate"]
+    cols = [
+        "model",
+        "trials_ok",
+        "trials_failed",
+        "avg_wall_s",
+        "avg_ttft_s",
+        "avg_ttft_overhead_s",
+        "agg_tps",
+        "avg_ram_peak_mb",
+        "avg_quality",
+        "schema_success_rate",
+    ]
     print(a.summary[cols].round(2).to_string(index=False))
     print("\nRanking:\n" + a.ranked[["model", "score"]].round(3).to_string(index=False))
     print(f"\n{a.explanation}\n\nFiles written to {processed} and {reports}")

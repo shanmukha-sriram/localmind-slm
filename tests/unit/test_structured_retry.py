@@ -4,8 +4,10 @@ import app.structured_output.generator as sgen
 from app.core.exceptions import StructuredOutputError, UnknownSchemaError
 from app.inference.generator import ChatResult, GenerationStats
 
-VALID = ('{"category": "Billing", "priority": "High", '
-         '"sentiment": "Negative", "summary": "Charged twice."}')
+VALID = (
+    '{"category": "Billing", "priority": "High", '
+    '"sentiment": "Negative", "summary": "Charged twice."}'
+)
 
 
 def _fake(outputs):

@@ -11,7 +11,9 @@ DEFAULT_HOST = "http://localhost:11434"
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run one prompt against a local model.")
     parser.add_argument("--model", required=True, help="e.g. llama3.2:3b")
-    parser.add_argument("--prompt", default="Explain what a Small Language Model is in two sentences.")
+    parser.add_argument(
+        "--prompt", default="Explain what a Small Language Model is in two sentences."
+    )
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--max-tokens", type=int, default=200)
     args = parser.parse_args()

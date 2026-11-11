@@ -30,7 +30,6 @@ def main() -> None:
     def progress(done: int, total: int, message: str) -> None:
         print(f"[{done}/{total}] {message}")
 
-
     try:
         path = run_benchmark(config, progress)
     except LocalMindError as exc:

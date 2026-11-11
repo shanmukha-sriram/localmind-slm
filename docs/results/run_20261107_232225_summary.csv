@@ -1,0 +1,2 @@
+model,trials_ok,trials_failed,avg_wall_s,median_wall_s,min_wall_s,max_wall_s,p95_wall_s,avg_ttft_s,avg_ttft_overhead_s,avg_tps,agg_tps,avg_ram_peak_mb,max_ram_peak_mb,model_mem_mb,model_vram_mb,avg_quality,schema_success_rate,cold_load_s,cold_ttft_s,cold_wall_s
+qwen2.5:3b,6,0,1.5849055500002578,0.9082304000039585,0.38519639999140054,3.621373699977994,3.621373699977994,0.5351736666634679,0.04543223333013454,18.412112852172584,13.198866217391926,74.24153645833333,74.3359375,2067.9199981689453,0.0,1.0,1.0,7.212183,8.522619700059295,11.296990300063044

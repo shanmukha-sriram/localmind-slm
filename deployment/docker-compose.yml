@@ -1,0 +1,45 @@
+name: localmind
+
+services:
+  localmind:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    image: localmind-slm:latest
+    ports:
+      # Bound to loopback only: Streamlit has no login, so do not expose it to your network.
+      - "127.0.0.1:8501:8501"
+    environment:
+      LOCALMIND_OLLAMA_HOST: ${LOCALMIND_OLLAMA_HOST:-http://host.docker.internal:11434}
+      LOCALMIND_TIMEOUT_S: ${LOCALMIND_TIMEOUT_S:-180}
+      LOCALMIND_LOG_LEVEL: ${LOCALMIND_LOG_LEVEL:-INFO}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # needed on Linux; harmless on Docker Desktop
+    volumes:
+      - ../results:/app/results               # results persist on your disk
+    restart: unless-stopped
+
+  # Optional: run Ollama in a container too (docker compose --profile ollama up).
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    volumes:
+      - ollama_data:/root/.ollama             # models persist across restarts
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+    restart: unless-stopped
+    # NVIDIA GPUs only (not applicable to Intel integrated graphics):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  ollama_data:
